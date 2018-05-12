@@ -37,7 +37,9 @@ class Header extends Component {
             <img src={homeIcon} alt="Home" className="homeIcon"/>
           </Link>
           <div className="rightSide">
-            <img src={add} alt="" className="add"/>
+            <Link to='/new'>
+              <img src={add} alt="" className="add"/>
+            </Link>
             <img src={profileIcon} alt="Profile" className="profileIcon" onClick = {this.showOptions}/>
             <div className="userOptions" style={{display:this.state.display}}>
               <h3 className="option" >Change Password</h3>
