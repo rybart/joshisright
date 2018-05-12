@@ -73,23 +73,23 @@ class Dashboard extends Component {
         tiles = this.state.tiles.map(tiles => {
           return(
           <div className = 'tile'>
-            <button className="delete">X</button>
+            <button className="delete" onClick = {()=>this.deleteTile(tiles.id)}>X</button>
             <h1 className = 'tileTitle'>{tiles.title}</h1>
-            <a ref={tiles.ref}>
-              <button className = 'viewButton'>View</button>
+            <a href={tiles.ref}>
+              View
             </a>
           </div>)
         })
-      }
+      }else{
       tiles = this.state.tiles.map(tiles => {
       return(
       <div className = 'tile' key = {tiles.id}>
         <h1 className = 'tileTitle'>{tiles.title}</h1>
         <a ref={tiles.ref}>
-          <button className = 'viewButton'>View</button>
+          View
         </a>
       </div>)
-      })
+      })}
     }else{
       return(
         <div className="loading">

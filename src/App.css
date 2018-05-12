@@ -124,7 +124,6 @@
   font-family: s
 }
 .Header {
-  margin-top: -154px;
   position: fixed;
   display: -ms-flexbox;
   display: flex;
@@ -141,8 +140,6 @@
     position: absolute;
     display: none;
     flex-direction: column;
-    margin-left: 92%;
-    margin-top: 103px;
 }
 
 img.homeIcon {
@@ -153,14 +150,13 @@ img.homeIcon {
 img.profileIcon {
   height: 91%;
 }
-.Dashboard {
-  margin-top: 154px;
-}
+
 .tilesContatiner {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: space-around;
+  padding-top: 150px;
 }
 
 .tile {
@@ -179,4 +175,12 @@ button.viewButton {
   border-radius: 26px;
   border-color: red;
   background: red;
+}
+img.add {
+  height: 50%;
+}
+button.delete {
+  margin-left: 330px;
+  margin-top: 14px;
+  border-radius: 5px;
 }

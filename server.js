@@ -4,10 +4,14 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const massive = require('massive');
-
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 const app = express();
+
+// app.use(express.static(path.join(__dirname, 'build')));
 
 massive(process.env.CONNECTION_STRING)
   .then((db) => {
@@ -18,79 +22,110 @@ massive(process.env.CONNECTION_STRING)
     console.warn('Failed to connect:');
     console.error(err);
   });
-
+  app.use(session({
+    name: 'helpside',
+    secret: process.env.SESSION_SECRET,
+    cookie: {
+      expires: 1 * 60 * 60 *1000
+    },
+    saveUninitialized: false,
+    rolling: true,
+    resave: false,
+  }));
 app.use(cors());
 app.use(bodyParser.json());
-app.use(session({
-  name: 'helpside',
-  secret: process.env.SESSION_SECRET,
-  saveUninitialized: false,
-  resave: true,
+
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+
+passport.use('login', new LocalStrategy({
+  usernameField: 'email', // req.body.email != req.body.username
+  passReqToCallback: true,
+}, (req, email, password, done) => {
+  const db = req.app.get('db')
+  db.user_table.findOne({ email: email })
+      .then(user => {
+          if (!user || !bcrypt.compareSync(password, user.password)) {
+              return done('Invalid email or password');
+          }
+          
+          delete user.password;
+          
+          done(null, user);
+      })
+      .catch(err => {
+          done(err);
+      });
 }));
 
-app.use(express.static(path.join(__dirname, 'build')));
+passport.use('register', new LocalStrategy({
+  usernameField: 'email', // req.body.email != req.body.username
+  passReqToCallback: true,
+}, (req, email, password, done) => {
+  if (!email || !password) {
+      return done('Email and password are required');
+  }
+  
+  password = bcrypt.hashSync(password, bcrypt.genSaltSync(15));
+  
+  req.db.user_table.insert({ email, password })
+      .then(user => {
+          delete user.password;
+          
+          done(null, user);
+      })
+      .catch(err => done(err));
+}));
+
+passport.serializeUser((user, done) => {
+  if (!user) {
+      done('No user');
+  }
+  
+  done(null, user);
+});
+
+passport.deserializeUser((user, done) => {
+  const db = app.get('db');
+  
+  if (!db) {
+      return done('Internal Server Error');
+  }
+  
+  db.user_table.findOne({ user_id: user.user_id })
+      .then(user => {
+          if (!user) {
+              return done(null, false);
+          }
+          
+          delete user.password;
+          
+          done(null, user);
+      })
+      .catch(err => done(err));
+});
 
 app.use(checkDb());
 //------------------------------------------------------------
-app.post('/api/login', (req, res) => {
-  const {
-    email,
-    password
-  } = req.body;
+app.post('/api/login', passport.authenticate(['login']), (req, res) => {
+    res.send({
+      message: 'Welcome to the jungle',
+      user:req.user,
+      success: true,
+    })
+});
 
-  req.db.user_table.findOne({
-      email,
-      password
-    })
-    .then(user => {
-      if (!user) {
-        return res.status(404).send({
-          success: false,
-          message: 'User not found'
-        });
-      }
-      req.session.user = user.user_id;
-      delete user.password;
-      res.send({
-        success: true,
-        message: 'Logged in successfully',
-        user
-      });
-    })
-    .catch(err => {
-      console.error(err)
-      res.status(500).send(err)
-    });
+app.post('/api/register', passport.authenticate(['register']), (req, res) => {
+  res.send({
+    message: 'Welcome to the jungle',
+    user:req.user,
+    success: true,
+  })
 });
 
 
-app.post('/api/register', (req, res) => {
-  const db = req.app.get('db');
-  const {
-    email,
-    password,
-    first_name,
-    last_name,
-    user_type
-  } = req.body;
-
-  req.db.user_table.insert({
-      email,
-      password,
-      first_name,
-      last_name,
-      user_type
-    })
-    .then(user => {
-      req.session.user = user.user_id;
-      console.log(req.session.user)
-      res.send({
-        success: true,
-        message: 'logged in successfully'
-      });
-    })
-    .catch(handleDbError(res));
-});
 
 app.get(`/api/dashboard/:id`, (req, res) => {
   const db = req.app.get('db');
@@ -106,10 +141,10 @@ app.get(`/api/dashboard/:id`, (req, res) => {
 app.get(`/api/user`, async (req, res) => {
   const db = req.app.get('db');
 
-  if (!req.session.user) {
+  if (!req.user) {
     return res.status(403).send(`Please login`)
   }
-  const user = await req.db.user_table.findOne(req.session.user)
+  const user = await req.db.user_table.findOne(req.user)
 
   return res.send(user)
 })
