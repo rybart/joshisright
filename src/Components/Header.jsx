@@ -16,7 +16,6 @@ class Header extends Component {
       passwordDisplay: 'none',
     }
     this.showOptions = this.showOptions.bind(this);
-
   }
   showOptions() {
     if (this.state.display === 'none') {
@@ -42,7 +41,9 @@ class Header extends Component {
             </Link>
             <img src={profileIcon} alt="Profile" className="profileIcon" onClick={this.showOptions} />
             <div className="userOptions" style={{ display: this.state.display }}>
-              <h3 className="option" >Change Password</h3>
+              <Link to='/edituser'>
+              <h3 className="option" >Edit Profile</h3>
+              </Link>
               <Link to='/'>
                 <h3 className="option" >Logout</h3>
               </Link>
@@ -56,13 +57,15 @@ class Header extends Component {
         <Link to='/dashboard'>
           <img src={homeIcon} alt="Home" className="homeIcon" />
         </Link>
-        <img src={profileIcon} alt="Profile" className="profileIcon" onClick={this.showOptions} />
-        <div className="userOptions" style={{ display: this.state.display }}>
-          <h3 className="option" >Change Password</h3>
-          <Link to='/'>
-            <h3 className="option" >Logout</h3>
-          </Link>
-        </div>
+        <div className="rightSide">
+            <img src={profileIcon} alt="Profile" className="profileIcon" onClick={this.showOptions} />
+            <div className="userOptions" style={{ display: this.state.display }}>
+              <h3 className="option" >Change Password</h3>
+              <Link to='/'>
+                <h3 className="option" >Logout</h3>
+              </Link>
+            </div>
+          </div>
       </div>
     );
   }

@@ -2,6 +2,10 @@ import React, { Component } from 'react';
 import '../App.css';
 import axios from 'axios';
 import Header from './Header.jsx';
+import * as Actions from '../Redux/Actions/action'
+
+import {getUser} from '../Redux/Actions/action';
+import {connect} from 'react-redux';
 
 class NewComponent extends Component {
     constructor(props){
@@ -18,18 +22,26 @@ class NewComponent extends Component {
         this.save = this.save.bind(this);
         
     }
-
+    componentWillMount() {
+      if (!this.props.user.id) {
+        this.props.getUser()
+          .catch(err => {
+            console.error(err);
+            this.props.history.push('/');
+          })
+      } 
+    }
     handleChange(e){
         this.setState({
             [e.target.name]: e.target.value,
         });
     }
     save(e){
-      e.preventDefault
+      e.preventDefault()
       axios.post(`/api/save`, {title:this.state.title, img:this.state.img, ref:this.state.ref, notes:this.state.notes, tags:this.state.tag, status:'Active'})
       .then(response => {
         debugger
-      this.context.history.push('/dashboard');
+      this.props.history.push('/dashboard');
       })
       .catch(err => {
         debugger
@@ -64,4 +76,4 @@ class NewComponent extends Component {
 
 }
 
-export default NewComponent;
+export default connect((state) => state, Actions)(NewComponent);

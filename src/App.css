@@ -145,6 +145,7 @@
 img.homeIcon {
   margin-top: 5px;
   height: 80%;
+  margin-left: 20px;
 }
 
 img.profileIcon {
@@ -179,6 +180,7 @@ button.viewButton {
 }
 img.add {
   height: 50%;
+  margin-bottom: 17px;
 }
 button.delete {
   margin-left: 330px;
@@ -220,4 +222,17 @@ input.save {
   border-radius: 12px;
   width: 82px;
   background: red;
+}
+a {
+  text-decoration: none;
+}
+button.view {
+  font-size: 20px;
+  border: none;
+  border-radius: 10px;
+  width: 61px;
+  margin-top: 117px;
+}
+.rightSide {
+  width: 165px;
 }

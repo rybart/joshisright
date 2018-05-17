@@ -136,6 +136,17 @@ app.get(`/api/user`, (req, res) => {
     })
     
 })
+app.put(`/api/user`, (req, res) => {
+    const db = req.app.get('db');
+    const {first_name, last_name, email, user_id} = req.body
+    db.updateUser(first_name, last_name, email, user_id)
+    .then(user => {
+        res.send("success")
+    })
+    .catch(err => {
+        console.error(err);
+    })
+})
 
 app.get('/*', (req, res) => {
   res.sendFile('index.html', {
