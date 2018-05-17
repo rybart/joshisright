@@ -76,58 +76,48 @@ class Dashboard extends Component {
     if (this.state.tiles.length > 0) {
       if (this.props.user.user_type === 'Admin') {
         tiles = this.state.tiles.map(tiles => {
-          return ( <
-            div className = 'tile' >
-            <
-            button className = "delete"
+          return ( <div className = 'tile' >
+            <button className = "delete"
             onClick = {
               () => this.deleteTile(tiles.id)
-            } > X < /button> <
-            h1 className = 'tileTitle' > {
+            } > X 
+            </button> <h1 className = 'tileTitle' > {
               tiles.title
-            } < /h1> <
-            a href = {
+            } 
+            </h1> <a href = {
               tiles.ref
             } >
-            View <
-            /a> < /
-            div > )
+            View </a> 
+            </div > )
         })
       } else {
         tiles = this.state.tiles.map(tiles => {
-          return ( <
-            div className = 'tile'
+          return ( <div className = 'tile'
             key = {
               tiles.id
             } >
-            <
-            h1 className = 'tileTitle' > {
+            <h1 className = 'tileTitle'> {
               tiles.title
-            } < /h1> <
-            a ref = {
-              tiles.ref
-            } >
-            View <
-            /a> < /
-            div > )
+            } </h1> 
+            <a ref = {tiles.ref}>
+            View
+            </a> 
+            </div > )
         })
       }
     } else {
-      return ( <
-        div className = "loading" >
-        Loading <
-        /div>)
+      return ( 
+      <div className = "loading" >
+        Loading 
+        </div>)
       }
-      return ( <
-        div className = "Dashboard" >
-        <
-        Header / >
-        <
-        div className = "tilesContatiner" > {
-          tiles
-        } <
-        /div> < /
-        div >
+      return ( 
+        <div className = "Dashboard" >
+        <Header />
+        <div className = "tilesContatiner" >
+         {tiles} 
+         </div> 
+         </div >
       );
     }
   }

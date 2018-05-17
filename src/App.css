@@ -165,6 +165,7 @@ img.profileIcon {
   border: 1px solid black;
   width: 400px;
   height: 500px;
+  margin-bottom: 30px;
 }
 
 h1.tileTitle {margin-top: 117px;font-size: 44px;}
@@ -183,4 +184,40 @@ button.delete {
   margin-left: 330px;
   margin-top: 14px;
   border-radius: 5px;
+}
+.fields {
+  padding-top: 200px;
+  display: flex;
+  flex-direction: column;
+}
+input.newInput {
+  margin: 10px;
+  font-size: 20px;
+  width: 400px;
+}
+textarea.notes {
+  font-size: 20px;
+  width: 400px;
+  resize:  none;
+  height: 200px;
+}
+form.newTile {
+  margin-top: 240px;
+}
+.image {
+  margin: auto;
+  width: 300px;
+  height: 250px;
+  margin-bottom: -240px;
+}
+.image > img{
+  max-width: 300px;
+  max-height: 250px
+}
+input.save {
+  font-size: 20px;
+  border: none;
+  border-radius: 12px;
+  width: 82px;
+  background: red;
 }
