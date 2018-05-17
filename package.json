@@ -1,8 +1,9 @@
 {
   "name": "joshisright",
   "version": "0.1.0",
-  "private": true,
-  "proxy": "http://localhost:5000/",
+  "description": "",
+  "main": "server.js",
+  "proxy": "http://localhost:8080/",
   "dependencies": {
     "axios": "^0.18.0",
     "bcrypt": "^2.0.1",

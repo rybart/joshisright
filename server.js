@@ -11,163 +11,179 @@ require('dotenv').config();
 
 const app = express();
 
-// app.use(express.static(path.join(__dirname, 'build')));
-
 massive(process.env.CONNECTION_STRING)
-  .then((db) => {
-    console.log('the server is sawing logs');
-    app.set('db', db);
-  })
-  .catch(err => {
-    console.warn('Failed to connect:');
-    console.error(err);
-  });
-  app.use(session({
+    .then((db)=>{
+        console.log('the server is sawing logs');
+        app.set('db', db);
+    })
+    .catch(err => {
+        console.warn('Failed to connect:');
+        console.error(err);
+    });
+
+passport.use('login', new LocalStrategy({
+    usernameField: 'email', // req.body.email != req.body.username
+    passReqToCallback: true,
+}, (req, email, password, done) => {
+    req.db.user_table.findOne({ email })
+        .then(user => {
+            if (!user || !bcrypt.compareSync(password, user.password)) {
+                return done('Invalid email or password');
+            }
+            
+            delete user.password;
+            
+            done(null, user);
+        })
+        .catch(err => {
+            done(err);
+        });
+}));
+
+passport.use('register', new LocalStrategy({
+    usernameField: 'email', // req.body.email != req.body.username
+    passReqToCallback: true,
+}, (req, email, password, done) => {
+    if (!email || !password) {
+        return done('Email and password are required');
+    }
+    
+    const {first_name, last_name} = req.body;
+
+    password = bcrypt.hashSync(password, bcrypt.genSaltSync(15));
+    
+    req.db.user_table.insert({ email, password, user_type:"non-client", first_name, last_name })
+        .then(user => {
+            delete user.password;
+            
+            done(null, user);
+        })
+        .catch(err => done(err));
+}));
+
+
+passport.serializeUser((user, done) => {
+    if (!user) {
+        done('No user');
+    }
+    
+    done(null, user.user_id);
+});
+
+passport.deserializeUser((id, done) => {
+    const db = app.get('db');
+    
+    if (!db) {
+        return done('Internal Server Error');
+    }
+    
+    db.user_table.findOne({ user_id: id })
+        .then(user => {
+            if (!user) {
+                return done(null, false);
+            }
+            
+            delete user.password;
+            
+            done(null, user);
+        })
+        .catch(err => done(err));
+});
+
+
+app.use(cors());
+app.use(bodyParser.json());
+app.use(session({
     name: 'helpside',
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET, // {userId: 1} => apowienpafosdihvpoaiwnpeiruhpasokmv287394erijf
+                                        // apowienpafosdihvpoaiwnpeiruhpasokmv287394erijf => {userId: 1}
     cookie: {
-      expires: 1 * 60 * 60 *1000
+        //days hours minutes seconds milseconds
+        expires:  5 * 24 * 60 * 60 *1000,
     },
     saveUninitialized: false,
     rolling: true,
     resave: false,
-  }));
-app.use(cors());
-app.use(bodyParser.json());
-
-
+}));
 app.use(passport.initialize());
 app.use(passport.session());
 
-
-passport.use('login', new LocalStrategy({
-  usernameField: 'email', // req.body.email != req.body.username
-  passReqToCallback: true,
-}, (req, email, password, done) => {
-  const db = req.app.get('db')
-  db.user_table.findOne({ email: email })
-      .then(user => {
-          if (!user || !bcrypt.compareSync(password, user.password)) {
-              return done('Invalid email or password');
-          }
-          
-          delete user.password;
-          
-          done(null, user);
-      })
-      .catch(err => {
-          done(err);
-      });
-}));
-
-passport.use('register', new LocalStrategy({
-  usernameField: 'email', // req.body.email != req.body.username
-  passReqToCallback: true,
-}, (req, email, password, done) => {
-  if (!email || !password) {
-      return done('Email and password are required');
-  }
-  
-  password = bcrypt.hashSync(password, bcrypt.genSaltSync(15));
-  
-  req.db.user_table.insert({ email, password })
-      .then(user => {
-          delete user.password;
-          
-          done(null, user);
-      })
-      .catch(err => done(err));
-}));
-
-passport.serializeUser((user, done) => {
-  if (!user) {
-      done('No user');
-  }
-  
-  done(null, user);
-});
-
-passport.deserializeUser((user, done) => {
-  const db = app.get('db');
-  
-  if (!db) {
-      return done('Internal Server Error');
-  }
-  
-  db.user_table.findOne({ user_id: user.user_id })
-      .then(user => {
-          if (!user) {
-              return done(null, false);
-          }
-          
-          delete user.password;
-          
-          done(null, user);
-      })
-      .catch(err => done(err));
-});
+app.use(express.static(path.join(__dirname, 'build')));
 
 app.use(checkDb());
 //------------------------------------------------------------
-app.post('/api/login', passport.authenticate(['login']), (req, res) => {
-    res.send({
-      message: 'Welcome to the jungle',
-      user:req.user,
-      success: true,
-    })
-});
-
-app.post('/api/register', passport.authenticate(['register']), (req, res) => {
-  res.send({
-    message: 'Welcome to the jungle',
-    user:req.user,
-    success: true,
-  })
-});
 
 
 
 app.get(`/api/dashboard/:id`, (req, res) => {
-  const db = req.app.get('db');
-  if (!req.session.user) {
-    return res.status(403).send('Please Login')
-  }
+    const db = req.app.get('db');
+    if (!req.user) {
+        return res.status(403).send('Please Login')
+    }
   db.getAll()
-    .then(info => {
+  .then(info => {
       res.send(info);
     })
 })
 
-app.get(`/api/user`, async (req, res) => {
-  const db = req.app.get('db');
+app.get(`/api/user`, (req, res) => {
+    const db = req.app.get('db');
+    
 
-  if (!req.user) {
-    return res.status(403).send(`Please login`)
-  }
-  const user = await req.db.user_table.findOne(req.user)
-
-  return res.send(user)
+    req.db.user_table.findOne({user_id:req.user.user_id})
+    .then((user)=>{
+        return res.send(user)
+    })
+    
 })
 
 app.get('/*', (req, res) => {
   res.sendFile('index.html', {
-    root: path.join(__dirname, "build")
-  })
+      root: path.join(__dirname, "build")
+    })
 })
 
-app.delete('/api/properties/:id', (req, res) => {
-  const db = req.app.get('db');
-  const { id } = req.params;
-  
-  req.db.info_table.destroy({ id })
-      .then(properties => {
-          res.send(properties);
-      })
-      .catch(err => {
+
+app.post('/api/login', passport.authenticate(['login']), (req, res) => {
+    res.send({
+        message: 'Welcome to the jungle',
+        user:req.user,
+        success: true,
+    })
+});
+
+app.post('/api/register', passport.authenticate(['register']), (req, res) => {
+    res.send({
+        message: 'Welcome to the jungle',
+        user:req.user,
+        success: true,
+    })
+});
+
+app.post(`/api/save`, (req, res) => {
+    const db = req.app.get('db');
+    const {title, img, ref, notes, tags, status} = req.body
+    db.saveTile([title, img, ref, notes, tags, status])
+    .then((response) =>{
+        res.send("response");
+    })
+    .catch((err) =>{
+        console.error(err);
+    })
+    
+})
+
+app.delete('/api/delete/:id', (req, res) => {
+    const db = req.app.get('db');
+    
+    req.db.info_table.destroy({ id:parseInt(req.params.id) })
+    .then(tile => {
+        res.send(tile);
+    })
+    .catch(err => {
         console.error(err)
-      })
+    })
 })
-
 
 //------------------------------------------------------------
 
